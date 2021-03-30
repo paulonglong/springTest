@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+            http://www.springframework.org/schema/beans
+            http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+            http://www.springframework.org/schema/aop
+            http://www.springframework.org/schema/aop/spring-aop-2.5.xsd
+            http://www.springframework.org/schema/tx
+            http://www.springframework.org/schema/tx/spring-tx-2.5.xsd
+            http://www.springframework.org/schema/context
+            http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:component-scan base-package="com.ouc.lwl"/>
+<!--    &lt;!&ndash; 使切面开启自动代理 &ndash;&gt;
+    <aop:aspectj-autoproxy></aop:aspectj-autoproxy>-->
+
+    <context:property-placeholder location="classpath:c3p0-db.properties" />
+    <!-- 配置数据源，读取properties文件信息 -->
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="driverClass" value="${jdbc.driverClass}" />
+        <property name="jdbcUrl" value="${jdbc.jdbcUrl}" />
+        <property name="user" value="${jdbc.user}" />
+        <property name="password" value="${jdbc.password}" />
+    </bean>
+    <!-- 配置jdbc模板 -->
+    <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+    <!-- 配置dao -->
+    <bean id="accountDao" class="com.ouc.lwl.dao.AccountDaoImpl">
+        <property name="jdbcTemplate" ref="jdbcTemplate" />
+    </bean>
+    <!-- 配置service -->
+    <bean id="accountService" class="com.ouc.lwl.service.AccountServiceImpl">
+        <property name="accountDao" ref="accountDao" />
+    </bean>
+
+    <!-- 事务管理器，依赖于数据源 -->
+    <bean id="txManager"
+          class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+
+    <tx:annotation-driven transaction-manager="txManager"/>
+
+    <bean id="helloWorld" class="com.ouc.lwl.controller.HelloWorld">
+        <property name="name" value="lwl"></property>
+        <property name="age" value="34"></property>
+    </bean>
+
+    <bean id="personDao" class="com.ouc.lwl.dao.PersonDaoImpl"/>
+
+    <bean id="personService" class="com.ouc.lwl.service.PersonServiceImpl">
+        <!-- 将personDao实例注入personService实例中 -->
+        <property name="personDao" ref="personDao"/>
+    </bean>
+
+<!--    <bean id="myAspectAop" class="com.ouc.lwl.aop.aop.MyAspect"/>
+    &lt;!&ndash;生成代理对象 &ndash;&gt;
+    <bean id="personDaoProxy"
+          class="org.springframework.aop.framework.ProxyFactoryBean">
+        &lt;!&ndash;代理实现的接口 &ndash;&gt;
+        <property name="proxyInterfaces" value="com.ouc.lwl.dao.PersonDao"/>
+        &lt;!&ndash;代理的目标对象 &ndash;&gt;
+        <property name="target" ref="personDao"/>
+        &lt;!&ndash;用通知增强目标 &ndash;&gt;
+        <property name="interceptorNames" value="myAspectAop"/>
+        &lt;!&ndash; 如何生成代理，true:使用cglib; false :使用jdk动态代理 &ndash;&gt;
+        <property name="proxyTargetClass" value="true"/>
+    </bean>-->
+
+<!--    <bean id="myAspects" class="com.ouc.lwl.aop.aop.MyAspects"></bean>
+    &lt;!&ndash;AOP 编程 &ndash;&gt;
+    <aop:config>
+        <aop:aspect ref="myAspects">
+            &lt;!&ndash; 配置切入点，通知最后增强哪些方法 &ndash;&gt;
+            <aop:pointcut id="myPointCut" expression="execution ( * com.ouc.lwl.dao.*.* (..))"/>
+
+            &lt;!&ndash;前置通知，关联通知 Advice和切入点PointCut &ndash;&gt;
+            <aop:before method="myBefore" pointcut-ref="myPointCut"/>
+
+            &lt;!&ndash;后置通知，在方法返回之后执行，就可以获得返回值returning 属性 &ndash;&gt;
+            <aop:after-returning method="myAfterReturning"
+                                 pointcut-ref="myPointCut" returning="returnVal"/>
+            &lt;!&ndash;环绕通知 &ndash;&gt;
+            <aop:around method="myAround" pointcut-ref="myPointCut"/>
+
+            &lt;!&ndash;抛出通知：用于处理程序发生异常，可以接收当前方法产生的异常 &ndash;&gt;
+            &lt;!&ndash; *注意：如果程序没有异常，则不会执行增强 &ndash;&gt;
+            &lt;!&ndash; * throwing属性：用于设置通知第二个参数的名称，类型Throwable &ndash;&gt;
+            <aop:after-throwing method="myAfterThrowing"
+                                pointcut-ref="myPointCut" throwing="e"/>
+
+            &lt;!&ndash;最终通知：无论程序发生任何事情，都将执行 &ndash;&gt;
+            <aop:after method="myAfter" pointcut-ref="myPointCut"/>
+        </aop:aspect>
+    </aop:config>-->
+</beans>
